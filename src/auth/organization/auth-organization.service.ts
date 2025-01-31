@@ -5,10 +5,14 @@ import { FirebaseCollections } from 'src/common/constants/firebase-collections';
 import * as argon2 from 'argon2';
 import * as admin from 'firebase-admin';
 import { UserRole } from '../decorator/roles.decorator';
+import { FileProcessorService } from 'src/common/file-processor/file-processor.service';
 
 @Injectable()
 export class AuthOrganizationService {
-  constructor(private firebaseService: FirebaseService) {}
+  constructor(
+    private firebaseService: FirebaseService,
+    private fileProcessingService: FileProcessorService,
+  ) {}
 
   async signup(dto: OrganizaitionSignupDto) {
     try {
@@ -38,10 +42,26 @@ export class AuthOrganizationService {
         password: dto.password,
       });
 
+      // Process the file
+      const compressedFileBuffer =
+        await this.fileProcessingService.processDocument(
+          dto.identificationFile,
+        );
+
+      // Upload the processed file
+
+      const identificationFileUrl = await this.firebaseService.uploadFile(
+        {
+          ...dto.identificationFile,
+          buffer: compressedFileBuffer,
+        },
+        `organizations/${userRecord.uid}/identifications`, // Fixed typo in "organizations"
+      );
       // Prepare customer document
       const organizaitionDoc = {
         organizaitionName: dto.organizaitionName,
         organizaitionNameEnglish: dto.organizaitionNameEnglish,
+        organizaitionType: dto.organizaitionType,
         phoneNumber: dto.phoneNumber,
         email: dto.email,
         uid: userRecord.uid,
@@ -49,15 +69,19 @@ export class AuthOrganizationService {
         isActive: true,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        numberOfEmployees: dto.numberOfEmployees,
+        numberOfBranches: dto.numberOfBranches,
+        mainLocation: dto.mainLocation,
+        identificationFileUrl: identificationFileUrl,
       };
 
       // Start transaction
       return await db.runTransaction(async (transaction) => {
-        // Set customer document in transaction
-        const customerRef = db
+        // Set organizaitionRef document in transaction
+        const organizaitionRef = db
           .collection(FirebaseCollections.ORGANIZATION)
           .doc(userRecord.uid);
-        transaction.set(customerRef, organizaitionDoc);
+        transaction.set(organizaitionRef, organizaitionDoc);
 
         // Set custom claims
         await this.firebaseService

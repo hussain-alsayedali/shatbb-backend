@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   IsEmail,
   IsEnum,
@@ -22,11 +23,11 @@ export class OrganizaitionSignupDto {
   @IsNotEmpty()
   organizaitionNameEnglish: string;
 
-  @ApiProperty({ example: 'Riyadh muthidah' })
+  @ApiProperty({ example: 'Ministry' })
   @IsEnum(['Company', 'Ministry'])
   @IsString()
   @IsNotEmpty()
-  organizationNameEnglish: string;
+  organizaitionType: string;
 
   @ApiProperty({ example: 'Riyadh' })
   @IsString()
@@ -49,12 +50,14 @@ export class OrganizaitionSignupDto {
   @MinLength(8, { message: 'Password must be at least 8 characters long' })
   password: string;
 
-  @ApiProperty({ example: '100' })
+  @ApiProperty({ example: 100 })
+  @Type(() => Number)
   @IsNumber()
   @IsNotEmpty()
   numberOfEmployees: number;
 
-  @ApiProperty({ example: '100' })
+  @ApiProperty({ example: 100 })
+  @Type(() => Number)
   @IsNumber()
   @IsNotEmpty()
   numberOfBranches: number;

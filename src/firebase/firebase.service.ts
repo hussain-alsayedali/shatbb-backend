@@ -25,7 +25,7 @@ export class FirebaseService implements OnModuleInit {
       this.firebaseApp = admin.initializeApp({
         credential: admin.credential.cert(firebaseConfig),
         databaseURL: `https://${firebaseConfig.projectId}.firebaseio.com`,
-        storageBucket: `${firebaseConfig.projectId}.appspot.com`,
+        storageBucket: `${firebaseConfig.projectId}.firebasestorage.app`,
       });
       console.log('Firebase is initalized');
     } else {
@@ -39,7 +39,7 @@ export class FirebaseService implements OnModuleInit {
       clientEmail: this.configService.get<string>('CLIENT_EMAIL'),
       privateKey: this.configService
         .get<string>('PRIVATE_KEY')
-        .replace(/\\n/g, '\n'), // Replace escaped newlines
+        .replace(/\\n/g, '\n'),
     };
   }
 
@@ -79,7 +79,7 @@ export class FirebaseService implements OnModuleInit {
   }
 
   async uploadFile(file: Express.Multer.File, path: string): Promise<string> {
-    const bucket = this.storage.bucket();
+    const bucket = this.getStorage().bucket(); // Uses the default bucket from initialization
     const fileName = `${path}/${uuidv4()}-${file.originalname}`;
     const fileUpload = bucket.file(fileName);
 
@@ -91,14 +91,23 @@ export class FirebaseService implements OnModuleInit {
 
     return new Promise((resolve, reject) => {
       stream.on('error', (error) => {
-        reject(error);
+        reject(new Error(`File upload failed: ${error.message}`));
       });
 
-      stream.on('finish', () => {
-        const publicUrl = `https://storage.googleapis.com/${bucket.name}/${fileUpload.name}`;
-        resolve(publicUrl);
+      stream.on('finish', async () => {
+        try {
+          // Make the file publicly accessible
+          await fileUpload.makePublic();
+
+          // Get the public URL
+          const publicUrl = `https://storage.googleapis.com/${bucket.name}/${fileUpload.name}`;
+          resolve(publicUrl);
+        } catch (error) {
+          reject(new Error(`Failed to make file public: ${error.message}`));
+        }
       });
 
+      // Write the buffer to the stream
       stream.end(file.buffer);
     });
   }
