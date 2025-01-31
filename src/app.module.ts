@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { FirebaseModule } from './firebase/firebase.module';
-import { CompanyModule } from './company/company.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { APP_INTERCEPTOR } from '@nestjs/core';
@@ -15,7 +14,7 @@ import { OrganizaitionModule } from './organizaition/organizaition.module';
   imports: [
     ConfigModule.forRoot({ cache: true, isGlobal: true }),
     FirebaseModule,
-    CompanyModule,
+
     AuthModule,
     FileProcessorModule,
     OrganizaitionModule,

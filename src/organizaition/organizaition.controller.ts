@@ -5,7 +5,7 @@ import { UserData } from 'src/auth/decorator/get-user.decorator';
 @ApiBearerAuth()
 @Controller('organizaition')
 export class OrganizaitionController {
-  @Get(':id')
+  @Get()
   getCurrentOrganizaition(@UserData() user: any) {
     return user;
   }
