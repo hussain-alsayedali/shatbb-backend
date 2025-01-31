@@ -21,7 +21,7 @@ export class UserDocInterceptor implements NestInterceptor {
     if (decodedToken && decodedToken.role && decodedToken.uid) {
       const docRef = this.firebaseService
         .getFirestore()
-        .collection((decodedToken.role + 's').toLowerCase())
+        .collection('organizations')
         .doc(decodedToken.uid);
 
       const doc = await docRef.get();
